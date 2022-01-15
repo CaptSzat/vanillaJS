@@ -5,7 +5,7 @@ socket.emit('name');
 // socket.on('player', (data) => {
 //     console.log(data);
 // });
-
+//Why
 const canvas = document.getElementById('game');
 const game = canvas.getContext("2d");
 canvas.width = 1280;
