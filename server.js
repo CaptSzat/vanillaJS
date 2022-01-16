@@ -14,40 +14,30 @@ const server = express()
 const io = socketIO(server);
 
 var data = {
-  players: [{
-      x: 0,
-      y: 0,
-      in: false,
-      socket: ''
-  },
-  {
-    x: 0,
-    y: 0,
-    in: false,
-    socket: ''
-}]};
+  players: []};
 
 io.on('connection', (socket) => {
   console.log('Client connected');
-  if(!data.players[0].in){
-    data.players[0].socket = socket.id;
-    data.players[0].in = true;
-    // io.to(socket.id).emit('player', (0));
-  }else{
-    data.players[1].socket = socket.id;
-    data.players[1].in = true;
-    // io.to(socket.id).emit('player', (1));
-  }
+
+  data.players.push(addPlayer(socket));
   socket.on('player', (info) => {
-    if(data.players[0].socket === socket.id){
-        data.players[0].x = info.pos.x;
-        data.players[0].y = info.pos.y;
-        io.to(data.players[1].socket).emit('data', data.players[0]);
-    }else{
-        data.players[1].x = info.pos.x;
-        data.players[1].y = info.pos.y;
-        io.to(data.players[0].socket).emit('data', data.players[1]);
+    for(let i = 0; i < data.players.length; i++){
+      if(data.players[i].socket === socket.id){
+        data.players[i].x = info.pos.x;
+        data.players[i].y = info.pos.y;
+        io.emit('data', data);
+        // console.log(data);
+      }
     }
+    // if(data.players[0].socket === socket.id){
+    //     data.players[0].x = info.pos.x;
+    //     data.players[0].y = info.pos.y;
+    //     io.emit('data', data.players[0]);
+    // }else{
+    //     data.players[1].x = info.pos.x;
+    //     data.players[1].y = info.pos.y;
+    //     io.emit('data', data.players[1]);
+    // }
   });
 
   console.log(data);
@@ -60,12 +50,14 @@ io.on('connection', (socket) => {
             if(data.players[i].socket === socket.id){
                 data.players[i].in = false;
                 data.players[i].socket = '';
+                data.players.splice(i, 1);
                 console.log('Player Left');
+                console.log(data);
             }
       }
       console.log('Client disconnected');
   });
-    io.emit('hi', 'socket' + socket.id);
+    io.to(socket.id).emit('socket-info', socket.id);
     // io.sockets.socket(socketId).emit(msg);
 //   socket.on('data', (da) => {
 //     data = da;
@@ -75,3 +67,23 @@ io.on('connection', (socket) => {
 });
 
 setInterval(() => io.emit('time', new Date().toTimeString()), 1000);
+
+function addPlayer(socket){
+  let defaultPlayer = {
+    x: 0,
+    y: 0,
+    in: true,
+    socket: socket.id
+  }
+  return defaultPlayer;
+}
+
+// if(!data.players[0].in){
+//   data.players[0].socket = socket.id;
+//   data.players[0].in = true;
+//   // io.to(socket.id).emit('player', (0));
+// }else{
+//   data.players[1].socket = socket.id;
+//   data.players[1].in = true;
+//   // io.to(socket.id).emit('player', (1));
+// }

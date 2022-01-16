@@ -1,11 +1,12 @@
 var socket = io();
-
+let socketInfo;
 socket.emit('name');
 
-// socket.on('player', (data) => {
-//     console.log(data);
-// });
-//Why
+socket.on('socket-info', (data) => {
+    socketInfo = data;
+    console.log(data);
+});
+
 const canvas = document.getElementById('game');
 const game = canvas.getContext("2d");
 canvas.width = 1280;
@@ -13,10 +14,16 @@ canvas.height = 720;
 
 const gravity = 0.4;
 
+let playerCount = 0;
+
+let playerImage = new Image(60, 45);
+playerImage.src = './char.png';
+
 class Player{
-    constructor(index, color, x, y){
+    constructor(index, color, x, y, image){
         this.index = index;
         this.color = color;
+        this.image = image;
         this.pos = {
             x: x,
             y: y
@@ -26,11 +33,12 @@ class Player{
             y: 0
         }
         this.width = 50,
-        this.height = 50
+        this.height = 60
     }
     draw(){
         game.fillStyle = this.color;
-        game.fillRect(this.pos.x, this.pos.y, this.width, this.height);
+        // game.fillRect(this.pos.x, this.pos.y, this.width, this.height);
+        game.drawImage(this.image, this.pos.x, this.pos.y);
     }
     update(){
         this.draw();
@@ -43,11 +51,6 @@ class Player{
             this.velocity.y = 0;
         }
     }
-    // setPos(x, y){
-    //     this.draw();
-    //     this.pos.x = x;
-    //     this.pos.y = y;
-    // }
 }
 
 class Platform{
@@ -65,8 +68,8 @@ class Platform{
     }
 }
 
-const player = new Player(0,'rgb(20,20,20)', 500, 10);
-const playerTwo = new Player(1,'rgb(20,200,20)', 600, 10);
+const player = new Player(0,'rgb(20,20,20)', 500, 10, playerImage);
+let players = [];
 const platform = new Platform(300, 400);
 let keyPress = {
     w: false,
@@ -80,14 +83,31 @@ function animate(){
     game.fillRect(0, 0, canvas.width, canvas.height);
     platform.draw();
     socket.emit('player', (player));
-    playerTwo.draw();
+    for(let i = 0; i < players.length; i++){
+        players[i].draw();
+    }
     player.update();
     logic();
 }
 socket.on('data', (data) => {
+    if(data.players.length-1 > playerCount){
+        players.push(new Player(1,'rgb(20,200,20)', 600, 10, playerImage));
+        playerCount++;
+    }
+    if(data.players.length-1 < playerCount){
+        players.pop();
+        playerCount--;
+    }
+    
     console.log(data);
-    playerTwo.pos.x = data.x;
-    playerTwo.pos.y = data.y;
+    let a = 0;
+    for(let i = 0; i < data.players.length; i++){
+        if(socketInfo != data.players[i].socket){
+            players[a].pos.x = data.players[i].x;
+            players[a].pos.y = data.players[i].y;
+            a++;
+        }
+    }
 });
 animate();
 
