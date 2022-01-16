@@ -90,11 +90,17 @@ function animate(){
     logic();
 }
 socket.on('data', (data) => {
-    if(data.players.length-1 > playerCount){
-        players.push(new Player(1,'rgb(20,200,20)', 600, 10, playerImage));
-        playerCount++;
-    }
-    if(data.players.length-1 < playerCount){
+    // if(data.players.length-1 > playerCount){
+        for(let i = 0; i < (data.players.length-1 - playerCount); i++){
+            players.push(new Player(1,'rgb(20,200,20)', 600, 10, playerImage));
+            playerCount++;
+        }
+    // }
+    // if(data.players.length-1 < playerCount){
+    //     players.pop();
+    //     playerCount--;
+    // }
+    for(let i = 0; i > (data.players.length-1 - playerCount); i--){
         players.pop();
         playerCount--;
     }
